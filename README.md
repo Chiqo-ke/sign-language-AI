@@ -9,7 +9,7 @@ Get videos of single words
 save the video using the sign's name
 save it inside the Training folder
 
-# Steps forrunning
+# Step
 
 RUN: checker.py for traing
 RUN: test.py to do more training; you will be signing the videos it has been trained with then it will give percentage of its accuracy on the word. You will then be prompted to give a name for the sign make sure you give the name of the sign u intented it to interpreate.
