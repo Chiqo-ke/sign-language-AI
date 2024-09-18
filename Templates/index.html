@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deaf Connect UI</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #002966;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            position: relative;
+            width: 80%;
+            height: 80%;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #002966;
+        }
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .header img {
+            width: 50px;
+            margin-right: 10px;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin: 0;
+        }
+        .text-output {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 10px;
+            width: 60%;
+            height: 20%;
+            color: #00BFFF;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            width: 60%;
+        }
+        .footer button {
+            width: 100px;
+            height: 50px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+        }
+        #signButton {
+            background-color: #FF7F50;
+        }
+        #voiceButton {
+            background-color: #00BFFF;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>DEAF CONNECT</h1>
+    </div>
+    
+    <div class="text-output" id="transcript">
+        Voice transcribed will be displayed here “Text output”<br>
+    </div>
+
+    <div class="footer">
+        <button id="signButton">SIGN</button>
+        <button id="voiceButton">VOICE</button>
+    </div>
+</div>
+
+<script>
+let recognition;
+let isRecording = false;
+
+// Add click event to the sign button
+document.getElementById("signButton").addEventListener("click", function() {
+    fetch('/sign', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ request: 'start_sign_detection' }) // Send some data if needed
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('transcript').innerHTML = data.result; // Display response from backend
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+});
+
+// Check if the browser supports the Web Speech API
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+
+    recognition.continuous = true; // Allow continuous results
+    recognition.interimResults = true; // Enable interim results for real-time transcription
+    recognition.lang = 'en-US'; // Set the language for recognition
+
+    // Handle results from the voice recognition
+    recognition.onresult = function(event) {
+        let finalTranscript = '';  // Final recognized text
+        let interimTranscript = '';  // Temporary interim text
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;  // Final confirmed result
+            } else {
+                interimTranscript += event.results[i][0].transcript;  // Interim results
+            }
+        }
+
+        // Display both interim and final transcripts
+        document.getElementById('transcript').innerHTML = finalTranscript + '<br><em>' + interimTranscript + '</em>';
+    };
+
+    recognition.onerror = function(event) {
+        console.error("Speech recognition error: ", event.error);
+    };
+
+} else {
+    alert("Your browser does not support speech recognition.");
+}
+
+// Add click event to the voice button
+document.getElementById("voiceButton").addEventListener("click", function() {
+    if (isRecording) {
+        recognition.stop(); // Stop recognition when the button is clicked again
+        isRecording = false;
+        this.innerHTML = "VOICE"; // Reset button text
+    } else {
+        recognition.start(); // Start recognition when the button is clicked
+        isRecording = true;
+        this.innerHTML = "STOP"; // Change button text to indicate recording is active
+    }
+});
+</script>
+
+</body>
+</html>
